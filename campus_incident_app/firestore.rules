@@ -1,0 +1,63 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{db}/documents {
+
+    function signedIn() { return request.auth != null; }
+
+    // Verified ALU email only.
+    function aluVerified() {
+      return signedIn()
+        && request.auth.token.email_verified == true
+        && request.auth.token.email.matches('.*@(alustudent|alueducation)[.]com$');
+    }
+
+    // Role lives in users/{uid}.role and can only be changed in the Console.
+    function isStaff() {
+      return aluVerified()
+        && get(/databases/$(db)/documents/users/$(request.auth.uid)).data.role in ['staff', 'admin'];
+    }
+
+    function changed() {
+      return request.resource.data.diff(resource.data).affectedKeys();
+    }
+
+    match /users/{uid} {
+      allow read: if signedIn() && (request.auth.uid == uid || isStaff());
+      allow create: if signedIn() && request.auth.uid == uid
+                    && request.resource.data.role == 'student';
+      // Users may edit their profile but never their own role.
+      allow update: if signedIn() && request.auth.uid == uid
+                    && request.resource.data.role == resource.data.role;
+      allow delete: if false;
+    }
+
+    match /incidents/{id} {
+      allow read: if aluVerified();
+
+      allow create: if aluVerified()
+        && request.resource.data.reporterId == request.auth.uid
+        && request.resource.data.status == 'submitted'
+        && request.resource.data.title is string
+        && request.resource.data.title.size() >= 3
+        && request.resource.data.title.size() <= 80
+        && request.resource.data.description is string
+        && request.resource.data.description.size() <= 500;
+
+      allow update: if aluVerified() && (
+        // Owner edits details while the report is still "submitted".
+        (resource.data.reporterId == request.auth.uid
+          && resource.data.status == 'submitted'
+          && changed().hasOnly(['title','description','category','location','isAnonymous','updatedAt']))
+        // Anyone verified can add/remove themselves from "affected".
+        || changed().hasOnly(['affectedBy'])
+        // Only staff can change status, notes and the timeline.
+        || (isStaff() && changed().hasOnly(['status','staffNote','history','updatedAt']))
+      );
+
+      allow delete: if aluVerified() && (
+        (resource.data.reporterId == request.auth.uid && resource.data.status == 'submitted')
+        || isStaff()
+      );
+    }
+  }
+}
