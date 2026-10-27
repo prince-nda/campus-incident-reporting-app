@@ -1,4 +1,1 @@
-{
-  "firestore": { "rules": "firestore.rules" },
-  "storage": { "rules": "storage.rules" }
-}
+{"firestore":{"rules":"firestore.rules"},"storage":{"rules":"storage.rules"},"flutter":{"platforms":{"android":{"default":{"projectId":"campusreportfix","appId":"1:860017270668:android:362e7604dfb6763d2d00a9","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"campusreportfix","configurations":{"android":"1:860017270668:android:362e7604dfb6763d2d00a9","web":"1:860017270668:web:360f9a8d05c4c95b2d00a9"}}}}}}
