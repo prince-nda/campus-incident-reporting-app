@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "860017270668",
+    "project_id": "campusreportfix",
+    "storage_bucket": "campusreportfix.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:860017270668:android:362e7604dfb6763d2d00a9",
+        "android_client_info": {
+          "package_name": "com.example.campus_incident_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCFyCFL879l0LndfRy3Y7yphWuHbMfms7A"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
