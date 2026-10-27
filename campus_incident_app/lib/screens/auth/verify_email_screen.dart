@@ -1,107 +1,70 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/theme/app_colors.dart';
-import '../../core/validators.dart';
 import '../../providers/auth_provider.dart';
 import '../../utils/ui.dart';
 import '../../widgets/app_button.dart';
 
-class RegisterScreen extends StatefulWidget {
-  const RegisterScreen({super.key});
-  @override
-  State<RegisterScreen> createState() => _RegisterScreenState();
-}
-
-class _RegisterScreenState extends State<RegisterScreen> {
-  final _form = GlobalKey<FormState>();
-  final _name = TextEditingController();
-  final _email = TextEditingController();
-  final _password = TextEditingController();
-  final _confirm = TextEditingController();
-  bool _hide = true;
-
-  @override
-  void dispose() {
-    _name.dispose();
-    _email.dispose();
-    _password.dispose();
-    _confirm.dispose();
-    super.dispose();
-  }
-
-  Future<void> _submit() async {
-    if (!_form.currentState!.validate()) return;
-    final err = await context
-        .read<AuthProvider>()
-        .register(_name.text, _email.text, _password.text);
-    if (!mounted) return;
-    if (err != null) {
-      showSnack(context, err, error: true);
-    } else {
-      // AuthGate now shows the verify-email screen; drop this route.
-      Navigator.of(context).popUntil((r) => r.isFirst);
-    }
-  }
+/// Blocks the app until the ALU email is verified.
+class VerifyEmailScreen extends StatelessWidget {
+  const VerifyEmailScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final busy = context.watch<AuthProvider>().busy;
+    final auth = context.watch<AuthProvider>();
     return Scaffold(
-      appBar: AppBar(title: const Text('Create account')),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Form(
-            key: _form,
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              const Text(
-                'Only ALU email addresses can register. We will send a link to verify it.',
-                style: TextStyle(color: AppColors.slate),
-              ),
-              const SizedBox(height: 20),
-              TextFormField(
-                controller: _name,
-                textCapitalization: TextCapitalization.words,
-                decoration: const InputDecoration(
-                    labelText: 'Full name', prefixIcon: Icon(Icons.person_outline)),
-                validator: (v) => Validators.minLength(v, 2, 'Name'),
-              ),
-              const SizedBox(height: 14),
-              TextFormField(
-                controller: _email,
-                keyboardType: TextInputType.emailAddress,
-                decoration: const InputDecoration(
-                    labelText: 'ALU email', prefixIcon: Icon(Icons.mail_outline)),
-                validator: Validators.aluEmail,
-              ),
-              const SizedBox(height: 14),
-              TextFormField(
-                controller: _password,
-                obscureText: _hide,
-                decoration: InputDecoration(
-                  labelText: 'Password',
-                  helperText: 'At least 8 characters',
-                  prefixIcon: const Icon(Icons.lock_outline),
-                  suffixIcon: IconButton(
-                    icon: Icon(_hide ? Icons.visibility_outlined : Icons.visibility_off_outlined),
-                    onPressed: () => setState(() => _hide = !_hide),
-                  ),
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 420),
+              child: Column(mainAxisSize: MainAxisSize.min, children: [
+                const Icon(Icons.mark_email_unread_outlined,
+                    size: 54, color: AppColors.pine),
+                const SizedBox(height: 16),
+                Text('Verify your email',
+                    style: Theme.of(context).textTheme.headlineSmall),
+                const SizedBox(height: 8),
+                Text(
+                  'We sent a verification link to\n${auth.user?.email ?? ''}\n'
+                      'Open it, then come back and tap the button below.',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: AppColors.slate, height: 1.4),
                 ),
-                validator: Validators.password,
-              ),
-              const SizedBox(height: 14),
-              TextFormField(
-                controller: _confirm,
-                obscureText: _hide,
-                decoration: const InputDecoration(
-                    labelText: 'Confirm password',
-                    prefixIcon: Icon(Icons.lock_outline)),
-                validator: (v) =>
-                    v != _password.text ? 'Passwords do not match' : null,
-              ),
-              const SizedBox(height: 24),
-              AppButton(label: 'Create account', loading: busy, onPressed: _submit),
-            ]),
+                const SizedBox(height: 24),
+                AppButton(
+                  label: "I've verified my email",
+                  loading: auth.busy,
+                  onPressed: () async {
+                    final ok = await context.read<AuthProvider>().checkVerified();
+                    if (!ok && context.mounted) {
+                      showSnack(context,
+                          'Not verified yet. Check your inbox and spam folder.',
+                          error: true);
+                    }
+                  },
+                ),
+                const SizedBox(height: 10),
+                OutlinedButton(
+                  onPressed: auth.busy
+                      ? null
+                      : () async {
+                    final err =
+                    await context.read<AuthProvider>().resendVerification();
+                    if (context.mounted) {
+                      showSnack(context, err ?? 'Verification email sent.',
+                          error: err != null);
+                    }
+                  },
+                  child: const Text('Resend email'),
+                ),
+                TextButton(
+                  onPressed: () => context.read<AuthProvider>().signOut(),
+                  child: const Text('Use a different account'),
+                ),
+              ]),
+            ),
           ),
         ),
       ),
