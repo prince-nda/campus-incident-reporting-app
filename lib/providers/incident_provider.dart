@@ -1,7 +1,9 @@
 import 'dart:async';
-import 'dart:io';
+import 'dart:convert';
+import 'dart:typed_data';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
+import '../core/app_config.dart';
 import '../models/incident.dart';
 import '../models/incident_enums.dart';
 import '../services/incident_service.dart';
@@ -131,31 +133,40 @@ class IncidentProvider extends ChangeNotifier {
     required IncidentCategory category,
     required String location,
     required bool anonymous,
-    File? photo,
+    Uint8List? photo,
   }) async {
     submitting = true;
     notifyListeners();
     try {
       final id = _service.newId();
       UploadedPhoto? up;
+      String? photoData;
       if (photo != null) {
-        up = await _storage.uploadIncidentPhoto(photo, uid, id);
+        if (AppConfig.useFirebaseStorage) {
+          up = await _storage.uploadIncidentPhoto(photo, uid, id);
+        } else {
+          if (photo.lengthInBytes > AppConfig.maxInlinePhotoBytes) {
+            return 'That photo is too large. Choose a smaller one.';
+          }
+          photoData = base64Encode(photo);
+        }
       }
       await _service
           .create(
-            id,
-            Incident.createMap(
-              title: title,
-              description: description,
-              category: category,
-              location: location,
-              reporterId: uid,
-              reporterName: name,
-              isAnonymous: anonymous,
-              photoUrl: up?.url,
-              photoPath: up?.path,
-            ),
-          )
+        id,
+        Incident.createMap(
+          title: title,
+          description: description,
+          category: category,
+          location: location,
+          reporterId: uid,
+          reporterName: name,
+          isAnonymous: anonymous,
+          photoUrl: up?.url,
+          photoPath: up?.path,
+          photoData: photoData,
+        ),
+      )
           .timeout(const Duration(seconds: 20));
       return null;
     } on FirebaseException catch (e) {
@@ -169,13 +180,13 @@ class IncidentProvider extends ChangeNotifier {
   }
 
   Future<String?> edit(
-    Incident i, {
-    required String title,
-    required String description,
-    required IncidentCategory category,
-    required String location,
-    required bool anonymous,
-  }) async {
+      Incident i, {
+        required String title,
+        required String description,
+        required IncidentCategory category,
+        required String location,
+        required bool anonymous,
+      }) async {
     submitting = true;
     notifyListeners();
     try {
@@ -197,11 +208,11 @@ class IncidentProvider extends ChangeNotifier {
   }
 
   Future<String?> updateStatus(
-    Incident i,
-    IncidentStatus status, {
-    required String staffName,
-    String? note,
-  }) async {
+      Incident i,
+      IncidentStatus status, {
+        required String staffName,
+        String? note,
+      }) async {
     try {
       await _service.updateStatus(i.id, status, staffName: staffName, note: note);
       return null;
@@ -234,10 +245,10 @@ class IncidentProvider extends ChangeNotifier {
   }
 
   String _firebaseMessage(FirebaseException e) => switch (e.code) {
-        'permission-denied' => 'You do not have permission to do that.',
-        'unavailable' || 'network-request-failed' => 'No internet connection.',
-        _ => e.message ?? 'Something went wrong.',
-      };
+    'permission-denied' => 'You do not have permission to do that.',
+    'unavailable' || 'network-request-failed' => 'No internet connection.',
+    _ => e.message ?? 'Something went wrong.',
+  };
 
   @override
   void dispose() {

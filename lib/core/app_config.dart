@@ -4,8 +4,13 @@ class AppConfig {
   static const appName = 'CampusFix';
   static const allowedEmailDomains = ['alustudent.com', 'alueducation.com'];
 
+  static const useFirebaseStorage = false;
+  static const maxInlinePhotoBytes = 600 * 1024;
+
   static const campusLocations = [
-    'Classroom block',
+    'Leadership Center',
+    'Social Commons',
+    'Enterprise Commons',
     'Library',
     'Cafeteria',
     'Student residence',

@@ -1,8 +1,8 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import '../core/theme/app_colors.dart';
 import '../models/incident.dart';
 import '../utils/formatters.dart';
+import 'incident_photo.dart';
 import 'status_chip.dart';
 
 class IncidentCard extends StatelessWidget {
@@ -69,16 +69,9 @@ class _Thumb extends StatelessWidget {
     );
     return ClipRRect(
       borderRadius: BorderRadius.circular(8),
-      child: incident.photoUrl == null
-          ? fallback
-          : CachedNetworkImage(
-              imageUrl: incident.photoUrl!,
-              width: 64,
-              height: 64,
-              fit: BoxFit.cover,
-              placeholder: (_, __) => fallback,
-              errorWidget: (_, __, ___) => fallback,
-            ),
+      child: incident.hasPhoto
+          ? IncidentPhoto(incident, width: 64, height: 64, fallback: fallback)
+          : fallback,
     );
   }
 }

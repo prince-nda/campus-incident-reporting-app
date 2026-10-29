@@ -1,4 +1,3 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/theme/app_colors.dart';
@@ -7,6 +6,7 @@ import '../../providers/incident_provider.dart';
 import '../../utils/formatters.dart';
 import '../../utils/ui.dart';
 import '../../widgets/empty_state.dart';
+import '../../widgets/incident_photo.dart';
 import '../../widgets/status_chip.dart';
 import '../../widgets/status_timeline.dart';
 import '../../widgets/status_update_panel.dart';
@@ -77,23 +77,10 @@ class IncidentDetailScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 4, 16, 32),
         children: [
-          if (inc.photoUrl != null) ...[
+          if (inc.hasPhoto) ...[
             ClipRRect(
               borderRadius: BorderRadius.circular(10),
-              child: CachedNetworkImage(
-                imageUrl: inc.photoUrl!,
-                height: 210,
-                width: double.infinity,
-                fit: BoxFit.cover,
-                placeholder: (_, __) => Container(
-                    height: 210,
-                    color: AppColors.stone,
-                    child: const Center(child: CircularProgressIndicator())),
-                errorWidget: (_, __, ___) => Container(
-                    height: 210,
-                    color: AppColors.stone,
-                    child: const Icon(Icons.broken_image_outlined)),
-              ),
+              child: IncidentPhoto(inc, height: 210, width: double.infinity),
             ),
             const SizedBox(height: 16),
           ],
@@ -116,7 +103,11 @@ class IncidentDetailScreen extends StatelessWidget {
           _MetaRow(Icons.schedule, 'Submitted ${fullDate(inc.createdAt)}', meta),
           _MetaRow(
             Icons.person_outline,
-            showReporter ? 'Reported by ${inc.reporterName}' : 'Reported anonymously',
+            !showReporter
+                ? 'Reported anonymously'
+                : (isOwner && inc.isAnonymous)
+                ? 'Reported by you (name hidden from other students)'
+                : 'Reported by ${inc.reporterName}',
             meta,
           ),
           const SizedBox(height: 18),
@@ -135,7 +126,7 @@ class IncidentDetailScreen extends StatelessWidget {
                     inc.affectedBy.isEmpty
                         ? 'Nobody else has said they are affected yet.'
                         : '${inc.affectedBy.length} '
-                            '${inc.affectedBy.length == 1 ? 'student is' : 'students are'} affected',
+                        '${inc.affectedBy.length == 1 ? 'student is' : 'students are'} affected',
                   ),
                 ),
                 if (!isOwner)
@@ -175,11 +166,11 @@ class _MetaRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.only(bottom: 4),
-        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Icon(icon, size: 16, color: AppColors.slate),
-          const SizedBox(width: 8),
-          Expanded(child: Text(text, style: style)),
-        ]),
-      );
+    padding: const EdgeInsets.only(bottom: 4),
+    child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Icon(icon, size: 16, color: AppColors.slate),
+      const SizedBox(width: 8),
+      Expanded(child: Text(text, style: style)),
+    ]),
+  );
 }

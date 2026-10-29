@@ -16,18 +16,18 @@ class StatusEvent {
   });
 
   Map<String, dynamic> toMap() => {
-        'status': status.name,
-        'at': Timestamp.fromDate(at),
-        'by': by,
-        if (note != null && note!.trim().isNotEmpty) 'note': note!.trim(),
-      };
+    'status': status.name,
+    'at': Timestamp.fromDate(at),
+    'by': by,
+    if (note != null && note!.trim().isNotEmpty) 'note': note!.trim(),
+  };
 
   factory StatusEvent.fromMap(Map<String, dynamic> m) => StatusEvent(
-        status: IncidentStatus.fromName(m['status'] as String?),
-        at: (m['at'] as Timestamp?)?.toDate() ?? DateTime.now(),
-        by: m['by'] as String? ?? 'Staff',
-        note: m['note'] as String?,
-      );
+    status: IncidentStatus.fromName(m['status'] as String?),
+    at: (m['at'] as Timestamp?)?.toDate() ?? DateTime.now(),
+    by: m['by'] as String? ?? 'Staff',
+    note: m['note'] as String?,
+  );
 }
 
 class Incident {
@@ -39,6 +39,7 @@ class Incident {
   final IncidentStatus status;
   final String? photoUrl;
   final String? photoPath;
+  final String? photoData; // base64 JPEG when stored in Firestore
   final String reporterId;
   final String reporterName;
   final bool isAnonymous;
@@ -62,6 +63,7 @@ class Incident {
     required this.updatedAt,
     this.photoUrl,
     this.photoPath,
+    this.photoData,
     this.affectedBy = const [],
     this.history = const [],
     this.staffNote,
@@ -69,6 +71,8 @@ class Incident {
 
   /// Safety reports that are still open get flagged as urgent.
   bool get isUrgent => category == IncidentCategory.safety && status.isOpen;
+
+  bool get hasPhoto => photoData != null || photoUrl != null;
 
   factory Incident.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
     final m = doc.data() ?? {};
@@ -82,6 +86,7 @@ class Incident {
       status: IncidentStatus.fromName(m['status'] as String?),
       photoUrl: m['photoUrl'] as String?,
       photoPath: m['photoPath'] as String?,
+      photoData: m['photoData'] as String?,
       reporterId: m['reporterId'] as String? ?? '',
       reporterName: m['reporterName'] as String? ?? 'Student',
       isAnonymous: m['isAnonymous'] as bool? ?? false,
@@ -106,6 +111,7 @@ class Incident {
     required bool isAnonymous,
     String? photoUrl,
     String? photoPath,
+    String? photoData,
   }) =>
       {
         'title': title.trim(),
@@ -115,6 +121,7 @@ class Incident {
         'status': IncidentStatus.submitted.name,
         'photoUrl': photoUrl,
         'photoPath': photoPath,
+        'photoData': photoData,
         'reporterId': reporterId,
         'reporterName': reporterName,
         'isAnonymous': isAnonymous,

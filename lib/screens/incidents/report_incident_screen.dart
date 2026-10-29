@@ -1,5 +1,4 @@
-import 'dart:io';
-import 'package:cached_network_image/cached_network_image.dart';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
@@ -11,9 +10,9 @@ import '../../models/incident_enums.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/incident_provider.dart';
 import '../../utils/ui.dart';
+import '../../widgets/incident_photo.dart';
 import '../../widgets/app_button.dart';
 
-/// Create a new report, or edit one that is still "submitted".
 class ReportIncidentScreen extends StatefulWidget {
   const ReportIncidentScreen({super.key, this.editing});
   final Incident? editing;
@@ -32,7 +31,7 @@ class _ReportIncidentScreenState extends State<ReportIncidentScreen> {
   late String? _location = _initialLocation();
   late final _detail = TextEditingController(text: _initialDetail());
   late bool _anonymous = widget.editing?.isAnonymous ?? false;
-  File? _photo;
+  Uint8List? _photo;
   bool _categoryError = false;
 
   bool get _isEdit => widget.editing != null;
@@ -62,8 +61,10 @@ class _ReportIncidentScreenState extends State<ReportIncidentScreen> {
   Future<void> _pick(ImageSource source) async {
     try {
       final x = await _picker.pickImage(
-          source: source, imageQuality: 70, maxWidth: 1600);
-      if (x != null) setState(() => _photo = File(x.path));
+          source: source, imageQuality: 55, maxWidth: 900);
+      if (x == null) return;
+      final bytes = await x.readAsBytes();
+      if (mounted) setState(() => _photo = bytes);
     } catch (_) {
       if (mounted) showSnack(context, 'Could not open the camera or gallery.', error: true);
     }
@@ -106,20 +107,20 @@ class _ReportIncidentScreenState extends State<ReportIncidentScreen> {
 
     final err = _isEdit
         ? await provider.edit(widget.editing!,
-            title: _title.text,
-            description: _desc.text,
-            category: _category!,
-            location: location,
-            anonymous: _anonymous)
+        title: _title.text,
+        description: _desc.text,
+        category: _category!,
+        location: location,
+        anonymous: _anonymous)
         : await provider.submit(
-            uid: auth.user!.uid,
-            name: auth.profile?.name ?? 'Student',
-            title: _title.text,
-            description: _desc.text,
-            category: _category!,
-            location: location,
-            anonymous: _anonymous,
-            photo: _photo);
+        uid: auth.user!.uid,
+        name: auth.profile?.name ?? 'Student',
+        title: _title.text,
+        description: _desc.text,
+        category: _category!,
+        location: location,
+        anonymous: _anonymous,
+        photo: _photo);
 
     if (!mounted) return;
     if (err != null) {
@@ -173,7 +174,7 @@ class _ReportIncidentScreenState extends State<ReportIncidentScreen> {
                   ),
                   child: const Text(
                     'Safety reports are flagged as urgent for staff. In an emergency, '
-                    'contact campus security directly.',
+                        'contact campus security directly.',
                     style: TextStyle(color: AppColors.urgent, fontSize: 12.5),
                   ),
                 ),
@@ -246,19 +247,18 @@ class _ReportIncidentScreenState extends State<ReportIncidentScreen> {
 
   Widget _photoBox() {
     if (_isEdit) {
-      final url = widget.editing!.photoUrl;
-      return url == null
+      final inc = widget.editing!;
+      return !inc.hasPhoto
           ? const Text('No photo attached.', style: TextStyle(color: AppColors.slate))
           : ClipRRect(
-              borderRadius: BorderRadius.circular(10),
-              child: CachedNetworkImage(
-                  imageUrl: url, height: 140, width: double.infinity, fit: BoxFit.cover));
+          borderRadius: BorderRadius.circular(10),
+          child: IncidentPhoto(inc, height: 140, width: double.infinity));
     }
     if (_photo != null) {
       return Stack(children: [
         ClipRRect(
           borderRadius: BorderRadius.circular(10),
-          child: Image.file(_photo!, height: 180, width: double.infinity, fit: BoxFit.cover),
+          child: Image.memory(_photo!, height: 180, width: double.infinity, fit: BoxFit.cover),
         ),
         Positioned(
           top: 8,
