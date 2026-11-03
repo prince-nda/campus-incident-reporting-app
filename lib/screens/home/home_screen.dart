@@ -47,7 +47,8 @@ class HomeScreen extends StatelessWidget {
             FilledButton.icon(
               onPressed: () => openReport(context),
               style: FilledButton.styleFrom(
-                  backgroundColor: Colors.white, foregroundColor: AppColors.deepPine),
+                  backgroundColor: Colors.white,
+                  foregroundColor: AppColors.deepPine),
               icon: const Icon(Icons.add, size: 18),
               label: const Text('Report an issue'),
             ),
@@ -59,9 +60,7 @@ class HomeScreen extends StatelessWidget {
         Row(children: [
           Expanded(
               child: StatTile(
-                  label: 'Total',
-                  value: mine.length,
-                  color: AppColors.ink)),
+                  label: 'Total', value: mine.length, color: AppColors.ink)),
           const SizedBox(width: 10),
           Expanded(
               child: StatTile(
@@ -86,15 +85,12 @@ class HomeScreen extends StatelessWidget {
               padding: EdgeInsets.all(32),
               child: Center(child: CircularProgressIndicator()))
         else if (recent.isEmpty)
-          SizedBox(
-            height: 220,
-            child: EmptyState(
-              icon: Icons.inbox_outlined,
-              title: 'No reports yet',
-              message: 'Issues you report will appear here with live status updates.',
-              actionLabel: 'Report an issue',
-              onAction: () => openReport(context),
-            ),
+          EmptyState(
+            icon: Icons.inbox_outlined,
+            title: 'No reports yet',
+            message: 'Issues you report will appear here with live status updates.',
+            actionLabel: 'Report an issue',
+            onAction: () => openReport(context),
           )
         else
           for (final i in recent) ...[

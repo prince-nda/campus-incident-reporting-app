@@ -54,7 +54,7 @@ class _StaffDashboardScreenState extends State<StaffDashboardScreen> {
               Expanded(
                 child: Text(
                   '${p.urgentCount} open safety '
-                  '${p.urgentCount == 1 ? 'report needs' : 'reports need'} attention',
+                      '${p.urgentCount == 1 ? 'report needs' : 'reports need'} attention',
                   style: const TextStyle(
                       color: AppColors.urgent, fontWeight: FontWeight.w700),
                 ),
@@ -96,13 +96,10 @@ class _StaffDashboardScreenState extends State<StaffDashboardScreen> {
             style: TextStyle(color: AppColors.slate, fontSize: 12.5)),
         const SizedBox(height: 10),
         if (queue.isEmpty)
-          const SizedBox(
-            height: 200,
-            child: EmptyState(
-              icon: Icons.task_alt,
-              title: 'Nothing here',
-              message: 'No reports match this status.',
-            ),
+          const EmptyState(
+            icon: Icons.task_alt,
+            title: 'Nothing here',
+            message: 'No reports match this status.',
           )
         else
           for (final i in queue) ...[
