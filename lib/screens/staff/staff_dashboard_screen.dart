@@ -63,13 +63,15 @@ class _StaffDashboardScreenState extends State<StaffDashboardScreen> {
           ),
         Text('Overview', style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: 10),
-        GridView.count(
-          crossAxisCount: 2,
+        GridView(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          mainAxisSpacing: 10,
-          crossAxisSpacing: 10,
-          childAspectRatio: 2.3,
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            mainAxisSpacing: 10,
+            crossAxisSpacing: 10,
+            mainAxisExtent: 96,
+          ),
           children: [
             for (final s in IncidentStatus.values)
               StatTile(
